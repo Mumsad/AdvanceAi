@@ -1,0 +1,81 @@
+requirmtnt:===
+
+
+
+
+
+code;---
+
+import matplotlib.pyplot as plt
+import numpy as np
+from tensorflow.keras.datasets import mnist
+
+# Load MNIST images
+(x_train, _), (_, _) = mnist.load_data()
+
+# Normalize to [0,1]
+x_train = x_train / 255.0
+
+# Pick 16 random images
+idx = np.random.choice(len(x_train), 16, replace=False)
+sample_imgs = x_train[idx]
+
+# Plot 4x4 grid
+plt.figure(figsize=(6,6))
+for i in range(16):
+    plt.subplot(4, 4, i+1)
+    plt.imshow(sample_imgs[i], cmap='gray')
+    plt.axis('off')
+
+plt.tight_layout()
+plt.savefig("mnist_grid_output.png")
+plt.show()
+
+
+
+
+another code:-
+import tensorflow as tf
+from tensorflow.keras import layers
+import matplotlib.pyplot as plt
+import numpy as np
+
+# -----------------------
+#  Generator Model
+# -----------------------
+def make_generator_model():
+    model = tf.keras.Sequential()
+    model.add(layers.Dense(7*7*256, use_bias=False, input_shape=(100,)))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
+
+    model.add(layers.Reshape((7, 7, 256)))
+
+    model.add(layers.Conv2DTranspose(128, (5, 5), strides=(1, 1), padding='same', use_bias=False))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
+
+    model.add(layers.Conv2DTranspose(64, (5, 5), strides=(2, 2), padding='same', use_bias=False))
+    model.add(layers.BatchNormalization())
+    model.add(layers.LeakyReLU())
+
+    model.add(layers.Conv2DTranspose(1, (5, 5), strides=(2, 2), padding='same',
+                                     use_bias=False, activation='tanh'))
+    return model
+
+# Create generator
+generator = make_generator_model()
+
+# -----------------------
+# Generate Fake Image
+# -----------------------
+noise = tf.random.normal([1, 100])
+generated_img = generator(noise, training=False)
+
+img = generated_img[0, :, :, 0]
+img = (img + 1) / 2  # Convert from [-1,1] to [0,1]
+
+plt.imshow(img, cmap='gray')
+plt.axis("off")
+plt.title("Generated Fake MNIST Image")
+plt.show()

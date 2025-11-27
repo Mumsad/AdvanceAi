@@ -1,0 +1,38 @@
+from ultralytics import YOLO
+import cv2
+
+# Load YOLOv8 model (nano version)
+model = YOLO("yolov8n.pt")
+
+# Load video file
+video_path = "test.mp4"
+cap = cv2.VideoCapture(video_path)
+
+# Check if video opened
+if not cap.isOpened():
+    print("Error: Could not open video.")
+    exit()
+
+while True:
+    ret, frame = cap.read()
+
+    # If frame not found → break loop
+    if not ret:
+        break
+
+    # Run object detection + tracking
+    results = model.track(frame, persist=True)
+
+    # Draw bounding boxes, labels, etc.
+    annotated_frame = results[0].plot()
+
+    # Show output
+    cv2.imshow("YOLOv8 Object Detection", annotated_frame)
+
+    # Press Q to close window
+    if cv2.waitKey(25) & 0xFF == ord('q'):
+        break
+
+# Release video & windows
+cap.release()
+cv2.destroyAllWindows()

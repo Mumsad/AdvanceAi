@@ -1,0 +1,63 @@
+# Step 1: Import libraries
+import evalml
+import pandas as pd
+from evalml.preprocessing import split_data
+from evalml.automl import AutoMLSearch
+
+# Step 2: Load dataset
+X, y = evalml.demos.load_breast_cancer()
+
+# Step 3: Split dataset into train and test
+X_train, X_test, y_train, y_test = split_data(X, y, problem_type='binary')
+
+# Optional: Check first few rows
+print(X_train.head())
+
+# Step 4: Run AutoML to find best model
+automl = AutoMLSearch(X_train=X_train, y_train=y_train, problem_type='binary')
+automl.search()
+
+# Step 5: Check rankings
+print("Pipeline Rankings:")
+print(automl.rankings)
+
+# Step 6: Get best pipeline
+best_pipeline = automl.best_pipeline
+print("Best Pipeline:")
+print(best_pipeline)
+
+# Step 7: Detailed pipeline description
+automl.describe_pipeline(automl.rankings.iloc[0]["id"])
+
+# Step 8: Evaluate on test data
+score = best_pipeline.score(X_test, y_test, objectives=["auc", "f1", "precision", "recall"])
+print("Evaluation on Test Data:")
+print(score)
+
+# Step 9: Optimize for specific metric (AUC)
+automl_auc = AutoMLSearch(
+    X_train=X_train,
+    y_train=y_train,
+    problem_type='binary',
+    objective='auc',
+    additional_objectives=['f1', 'precision'],
+    max_batches=1,
+    optimize_thresholds=True
+)
+automl_auc.search()
+
+best_pipeline_auc = automl_auc.best_pipeline
+print("Best Pipeline (AUC focused):")
+print(best_pipeline_auc.score(X_test, y_test, objectives=["auc"]))
+
+# Step 10: Save pipeline
+best_pipeline.save("model.pkl")
+
+# Step 11: Load pipeline
+from evalml.pipelines import load_pipeline
+check_model = load_pipeline("model.pkl")
+
+# Step 12: Predict probabilities
+predictions = check_model.predict_proba(X_test).to_dataframe()
+print("Sample Predictions:")
+print(predictions.head())
